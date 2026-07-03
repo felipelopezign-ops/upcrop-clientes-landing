@@ -216,11 +216,16 @@ function updateContent(index, animate = true) {
   }
 }
 
+function isMobileView() {
+  return mobileQuery.matches;
+}
+
 function highlightActiveLogo() {
+  const mobile = isMobileView();
   const items = logoTrack.querySelectorAll('.logo-item');
   const viewportRect = logoViewport.getBoundingClientRect();
 
-  const viewportCenter = isMobile
+  const viewportCenter = mobile
     ? viewportRect.left + viewportRect.width / 2
     : viewportRect.top + viewportRect.height * VISIBLE_CENTER_RATIO;
 
@@ -229,7 +234,7 @@ function highlightActiveLogo() {
 
   items.forEach((item) => {
     const rect = item.getBoundingClientRect();
-    const itemCenter = isMobile
+    const itemCenter = mobile
       ? rect.left + rect.width / 2
       : rect.top + rect.height / 2;
     const dist = Math.abs(itemCenter - viewportCenter);
@@ -249,6 +254,11 @@ function highlightActiveLogo() {
       updateContent(index);
     }
   }
+}
+
+function getMobileCenterOffset(index) {
+  const viewportWidth = logoViewport.clientWidth;
+  return -(index * ITEM_WIDTH_MOBILE) + viewportWidth / 2 - ITEM_WIDTH_MOBILE / 2;
 }
 
 function trackScroll() {
@@ -277,38 +287,34 @@ function updatePauseButton() {
 function setPaused(paused) {
   userPaused = paused;
   updatePauseButton();
-  logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
+
+  if (isMobileView() && !paused) {
+    logoTrack.style.animation = '';
+    logoTrack.style.transform = '';
+    logoTrack.classList.add('animate');
+    logoTrack.style.animationPlayState = 'running';
+  } else {
+    logoTrack.style.animationPlayState = paused ? 'paused' : 'running';
+  }
 }
 
 function goToPrev() {
-  if (isMobile) setPaused(true);
+  if (isMobileView()) setPaused(true);
   jumpToClient((activeIndex - 1 + CLIENTS.length) % CLIENTS.length);
 }
 
 function goToNext() {
-  if (isMobile) setPaused(true);
+  if (isMobileView()) setPaused(true);
   jumpToClient((activeIndex + 1) % CLIENTS.length);
 }
 
 function jumpToClient(index) {
+  const mobile = isMobileView();
   logoTrack.style.animationPlayState = 'paused';
 
-  if (isMobile) {
-    const offset = index * ITEM_WIDTH_MOBILE;
-    const { x: currentX } = getTrackTranslate();
-    const totalWidth = CLIENTS.length * ITEM_WIDTH_MOBILE;
-    const normalizedCurrent = currentX % totalWidth;
-    const diff = Math.abs(normalizedCurrent + offset);
-
-    let targetX = -offset;
-    if (diff > totalWidth / 2) {
-      targetX = currentX - (totalWidth - diff);
-    } else {
-      targetX = currentX + (-offset - normalizedCurrent);
-    }
-
+  if (mobile) {
     logoTrack.style.animation = 'none';
-    logoTrack.style.transform = `translateX(${targetX}px)`;
+    logoTrack.style.transform = `translateX(${getMobileCenterOffset(index)}px)`;
   } else {
     const offset = index * ITEM_HEIGHT;
     const { y: currentY } = getTrackTranslate();
@@ -327,9 +333,13 @@ function jumpToClient(index) {
     logoTrack.style.transform = `translateY(${targetY}px)`;
   }
 
+  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
+    item.classList.toggle('active', parseInt(item.dataset.index, 10) === index);
+  });
   updateContent(index);
 
   setTimeout(() => {
+    if (mobile && userPaused) return;
     logoTrack.style.animation = '';
     logoTrack.style.transform = '';
     logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
@@ -342,16 +352,17 @@ function applyViewportMode() {
   logoColumn.classList.toggle('is-mobile', isMobile);
   applyTrackDimensions();
   if (wasMobile !== isMobile) resetTrackAnimation();
+  if (isMobile) highlightActiveLogo();
 }
 
 function blockTouchOnLogoZone(e) {
-  if (!isMobile) return;
+  if (!isMobileView()) return;
   e.preventDefault();
 }
 
 function initClickHandlers() {
   logoTrack.addEventListener('click', (e) => {
-    if (isMobile) return;
+    if (isMobileView()) return;
     const item = e.target.closest('.logo-item');
     if (!item) return;
     jumpToClient(parseInt(item.dataset.index, 10));

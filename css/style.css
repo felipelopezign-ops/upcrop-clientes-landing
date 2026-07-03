@@ -247,6 +247,7 @@ body {
   border: 3px solid var(--blue);
   border-radius: 22px;
   pointer-events: none;
+  z-index: 5;
   background: rgba(238, 241, 255, 0.55);
   box-shadow:
     0 0 0 6px rgba(67, 97, 238, 0.12),
@@ -627,11 +628,12 @@ body {
   }
 
   .active-indicator {
-    width: 210px;
-    height: 128px;
-    top: 75px;
+    width: calc(var(--item-width, 210px) - 8px);
+    height: 118px;
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 5;
   }
 
   .client-logo {
