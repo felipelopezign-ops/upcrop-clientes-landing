@@ -31,7 +31,6 @@ const CLIENTS = [
     services: ['Control de Calidad', 'Gestión de Labores', 'Supervisión de Cosecha'],
     logo: 'assets/logos/giddings.png',
     logoAlt: 'Giddings',
-    logoDark: true,
   },
   {
     id: 'pi-berries',
@@ -54,7 +53,6 @@ const CLIENTS = [
     services: ['Gestión de Labores', 'Gestión de Packing', 'Control Operativo'],
     logo: 'assets/logos/korta-wines.png',
     logoAlt: 'Korta Wines',
-    logoDark: true,
   },
   {
     id: 'greenvic',
@@ -66,7 +64,6 @@ const CLIENTS = [
     services: ['Integración Campo-Packing', 'Fruta Orgánica', 'Trazabilidad'],
     logo: 'assets/logos/greenvic.png',
     logoAlt: 'Greenvic',
-    logoDark: true,
   },
   {
     id: 'errazuriz',
@@ -122,11 +119,10 @@ const CLIENTS = [
     services: ['Evaluación de Mercados', 'Analítica Predictiva', 'Comercialización Global'],
     logo: 'assets/logos/bostock.png',
     logoAlt: 'Bostock New Zealand',
-    logoDark: true,
   },
 ];
 
-const ITEM_HEIGHT = 110;
+const ITEM_HEIGHT = 150;
 const VISIBLE_CENTER_RATIO = 0.5;
 const SCROLL_DURATION = 55;
 
@@ -145,20 +141,13 @@ const serviceTags = document.getElementById('serviceTags');
 const currentIndexEl = document.getElementById('currentIndex');
 const totalCountEl = document.getElementById('totalCount');
 
-function logoHTML(client) {
-  const darkClass = client.logoDark ? ' client-logo--dark' : '';
-  return `<img src="${client.logo}" alt="${client.logoAlt}" class="client-logo${darkClass}" loading="lazy" />`;
-}
-
 function buildLogoTrack() {
   const allClients = [...CLIENTS, ...CLIENTS];
   logoTrack.innerHTML = allClients
     .map(
       (client, i) => `
     <div class="logo-item" data-index="${i % CLIENTS.length}" data-orig="${i}">
-      <div class="logo-item__inner${client.logoDark ? ' logo-item__inner--dark' : ''}">
-        ${logoHTML(client)}
-      </div>
+      <img src="${client.logo}" alt="${client.logoAlt}" class="client-logo" loading="lazy" />
     </div>`
     )
     .join('');
