@@ -152,7 +152,7 @@ body {
 /* ── Logo Column ── */
 .logo-column {
   position: relative;
-  height: 640px;
+  height: 720px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -160,7 +160,7 @@ body {
 
 .logo-viewport {
   height: 100%;
-  width: 380px;
+  width: 440px;
   overflow: hidden;
   position: relative;
   mask-image: linear-gradient(
@@ -192,12 +192,12 @@ body {
 
 .logo-item {
   flex-shrink: 0;
-  width: 340px;
-  height: var(--item-height, 170px);
+  width: 400px;
+  height: var(--item-height, 210px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.75rem;
   background: transparent;
   transition: transform 0.55s var(--ease-out);
   opacity: 1;
@@ -206,19 +206,19 @@ body {
 }
 
 .client-logo {
-  max-width: 280px;
-  max-height: 110px;
+  max-width: 360px;
+  max-height: 140px;
   width: auto;
   height: auto;
   object-fit: contain;
   pointer-events: none;
   opacity: 1;
   filter: none;
-  transition: max-height 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+  transition: max-height 0.55s var(--ease-out), max-width 0.55s var(--ease-out), transform 0.55s var(--ease-out);
 }
 
 .logo-item:not(.active) .client-logo {
-  transform: scale(0.88);
+  transform: scale(0.92);
 }
 
 .logo-item.active {
@@ -227,14 +227,14 @@ body {
 }
 
 .logo-item.active .client-logo {
-  max-height: 152px;
-  max-width: 310px;
+  max-height: 200px;
+  max-width: 400px;
   transform: scale(1);
   filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.1));
 }
 
 .logo-item:hover:not(.active) .client-logo {
-  transform: scale(0.94);
+  transform: scale(0.96);
 }
 
 .active-indicator {
@@ -242,8 +242,8 @@ body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 358px;
-  height: 178px;
+  width: 418px;
+  height: 218px;
   border: 3px solid var(--blue);
   border-radius: 22px;
   pointer-events: none;
@@ -468,13 +468,13 @@ body {
     gap: 1.5rem;
   }
 
-  .logo-column { height: 460px; }
-  .logo-viewport { width: 100%; max-width: 340px; }
-  .logo-item { width: 280px; }
-  .active-indicator { width: 298px; height: 158px; }
-  .client-logo { max-width: 220px; max-height: 92px; }
-  .logo-item.active .client-logo { max-height: 118px; max-width: 250px; }
-  .logo-item:not(.active) .client-logo { transform: scale(0.9); }
+  .logo-column { height: 520px; }
+  .logo-viewport { width: 100%; max-width: 360px; }
+  .logo-item { width: 300px; }
+  .active-indicator { width: 318px; height: 188px; }
+  .client-logo { max-width: 260px; max-height: 110px; }
+  .logo-item.active .client-logo { max-height: 145px; max-width: 290px; }
+  .logo-item:not(.active) .client-logo { transform: scale(0.93); }
 
   .content-column { padding: 0; }
   .closing { padding: 1.5rem 1.5rem 3rem; }
