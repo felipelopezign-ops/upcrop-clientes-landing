@@ -167,7 +167,7 @@ function buildLogoTrack() {
   logoTrack.innerHTML = allClients
     .map(
       (client, i) => `
-    <div class="logo-item" data-index="${i % CLIENTS.length}" data-orig="${i}">
+    <div class="logo-item" data-index="${i % CLIENTS.length}" data-orig="${i}" data-client="${client.id}">
       <img src="${client.logo}" alt="${client.logoAlt}" class="client-logo" loading="lazy" draggable="false" />
     </div>`
     )

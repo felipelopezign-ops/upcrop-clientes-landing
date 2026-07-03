@@ -237,6 +237,27 @@ body {
   transform: scale(0.96);
 }
 
+/* Pi Berries: logo vertical con padding interno — necesita más escala */
+.logo-item[data-client="pi-berries"] .client-logo {
+  max-height: 200px;
+  max-width: 320px;
+  transform: scale(1.2);
+}
+
+.logo-item.active[data-client="pi-berries"] .client-logo {
+  max-height: 280px;
+  max-width: 360px;
+  transform: scale(1.35);
+}
+
+.logo-item[data-client="pi-berries"]:not(.active) .client-logo {
+  transform: scale(1.15);
+}
+
+.logo-item[data-client="pi-berries"]:hover:not(.active) .client-logo {
+  transform: scale(1.18);
+}
+
 .active-indicator {
   position: absolute;
   left: 50%;
@@ -692,6 +713,22 @@ body {
 
   .logo-item:not(.active) .client-logo {
     transform: scale(0.93);
+  }
+
+  .logo-item[data-client="pi-berries"] .client-logo {
+    max-height: 120px;
+    max-width: 160px;
+    transform: scale(1.25);
+  }
+
+  .logo-item.active[data-client="pi-berries"] .client-logo {
+    max-height: 140px;
+    max-width: 180px;
+    transform: scale(1.4);
+  }
+
+  .logo-item[data-client="pi-berries"]:not(.active) .client-logo {
+    transform: scale(1.2);
   }
 
   .logo-track.animate:hover {
