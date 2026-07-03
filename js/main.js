@@ -141,6 +141,7 @@ const logoViewport = document.getElementById('logoViewport');
 const logoPrev = document.getElementById('logoPrev');
 const logoNext = document.getElementById('logoNext');
 const logoPause = document.getElementById('logoPause');
+const logoPauseLabel = document.getElementById('logoPauseLabel');
 const contentInner = document.getElementById('contentInner');
 const contentBadge = document.getElementById('contentBadge');
 const contentTitle = document.getElementById('contentTitle');
@@ -269,6 +270,7 @@ function getTrackTranslate() {
 function updatePauseButton() {
   logoPause.classList.toggle('is-paused', userPaused);
   logoPause.setAttribute('aria-label', userPaused ? 'Reanudar animación' : 'Pausar animación');
+  if (logoPauseLabel) logoPauseLabel.textContent = userPaused ? 'Reproducir' : 'Pausar';
   logoColumn.classList.toggle('user-paused', userPaused);
 }
 
