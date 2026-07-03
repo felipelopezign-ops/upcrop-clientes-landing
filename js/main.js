@@ -295,34 +295,51 @@ function getTrackTranslate() {
   return { x: parts[12] || 0, y: parts[13] || 0 };
 }
 
-function getMobileCenterOffset(index) {
-  const viewportWidth = logoViewport.clientWidth;
-  return -(index * ITEM_WIDTH_MOBILE) + viewportWidth / 2 - ITEM_WIDTH_MOBILE / 2;
+function getMobileItemWidth() {
+  const item = logoTrack.querySelector('.logo-item');
+  return item ? item.offsetWidth : ITEM_WIDTH_MOBILE;
 }
 
-function freezeMobileTrack() {
-  const { x } = getTrackTranslate();
+function getMobileCenterOffset(index) {
+  const itemWidth = getMobileItemWidth();
+  const viewportWidth = logoViewport.clientWidth;
+  if (!viewportWidth) return 0;
+  return -(index * itemWidth) + (viewportWidth - itemWidth) / 2;
+}
+
+function enterMobileManualMode() {
+  logoTrack.classList.remove('animate');
   logoTrack.style.animation = 'none';
-  logoTrack.style.transform = `translateX(${x}px)`;
+  logoTrack.style.transform = `translateX(${getMobileCenterOffset(activeIndex)}px)`;
 }
 
 function resumeMobileInfiniteScroll() {
   logoTrack.style.transition = '';
-  logoTrack.style.animation = '';
   logoTrack.style.transform = '';
+  logoTrack.style.animation = '';
   logoTrack.classList.add('animate');
   logoTrack.style.animationPlayState = 'running';
 }
 
 function mobileGoTo(index, animateContent = true) {
-  freezeMobileTrack();
+  const normalized = ((index % CLIENTS.length) + CLIENTS.length) % CLIENTS.length;
+
+  logoTrack.classList.remove('animate');
+  logoTrack.style.animation = 'none';
   logoTrack.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
-  logoTrack.style.transform = `translateX(${getMobileCenterOffset(index)}px)`;
-  setActiveLogoClass(index);
-  updateContent(index, animateContent);
+  logoTrack.style.transform = `translateX(${getMobileCenterOffset(normalized)}px)`;
+  setActiveLogoClass(normalized);
+  updateContent(normalized, animateContent);
+
   setTimeout(() => {
     logoTrack.style.transition = '';
   }, 460);
+}
+
+function mobileStep(delta) {
+  userPaused = true;
+  updatePauseButton();
+  mobileGoTo(activeIndex + delta);
 }
 
 function updatePauseButton() {
@@ -342,8 +359,7 @@ function setPaused(paused) {
   }
 
   if (paused) {
-    freezeMobileTrack();
-    logoTrack.style.animationPlayState = 'paused';
+    enterMobileManualMode();
   } else {
     resumeMobileInfiniteScroll();
   }
@@ -351,8 +367,7 @@ function setPaused(paused) {
 
 function goToPrev() {
   if (isMobileView()) {
-    setPaused(true);
-    mobileGoTo((activeIndex - 1 + CLIENTS.length) % CLIENTS.length);
+    mobileStep(-1);
     return;
   }
   jumpToClient((activeIndex - 1 + CLIENTS.length) % CLIENTS.length);
@@ -360,8 +375,7 @@ function goToPrev() {
 
 function goToNext() {
   if (isMobileView()) {
-    setPaused(true);
-    mobileGoTo((activeIndex + 1) % CLIENTS.length);
+    mobileStep(1);
     return;
   }
   jumpToClient((activeIndex + 1) % CLIENTS.length);
@@ -398,9 +412,13 @@ function jumpToClient(index) {
 function initMobileMode() {
   userPaused = true;
   updatePauseButton();
-  logoTrack.classList.add('animate');
-  freezeMobileTrack();
-  mobileGoTo(activeIndex, false);
+  logoTrack.classList.remove('animate');
+  logoTrack.style.animation = 'none';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      mobileGoTo(activeIndex, false);
+    });
+  });
 }
 
 function initDesktopMode() {
@@ -431,12 +449,12 @@ function onSwipeStart(e) {
 
   isSwipeDragging = true;
   logoColumn.classList.add('is-swipe-dragging');
+  userPaused = true;
+  updatePauseButton();
 
-  if (!userPaused) setPaused(true);
-  else freezeMobileTrack();
-
+  enterMobileManualMode();
   swipeStartX = e.touches[0].clientX;
-  swipeStartTranslateX = getTrackTranslate().x;
+  swipeStartTranslateX = getMobileCenterOffset(activeIndex);
   logoTrack.style.transition = 'none';
 }
 
@@ -512,18 +530,24 @@ function init() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    if (isMobileView() && !userPaused) freezeMobileTrack();
-    logoTrack.style.animationPlayState = 'paused';
+    if (isMobileView() && userPaused) enterMobileManualMode();
+    else logoTrack.style.animationPlayState = 'paused';
     cancelAnimationFrame(rafId);
     rafId = null;
   } else {
     if (isMobileView()) {
-      if (userPaused) freezeMobileTrack();
+      if (userPaused) enterMobileManualMode();
       else resumeMobileInfiniteScroll();
     } else {
       logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
     }
     if (!rafId) rafId = requestAnimationFrame(trackScroll);
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (isMobileView() && userPaused) {
+    mobileGoTo(activeIndex, false);
   }
 });
 
