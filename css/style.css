@@ -516,6 +516,7 @@ body {
   transition: transform 0.2s var(--ease), background 0.2s var(--ease);
   -webkit-tap-highlight-color: transparent;
   pointer-events: auto;
+  touch-action: manipulation;
   position: relative;
   z-index: 30;
 }
@@ -692,6 +693,7 @@ body {
     flex-direction: row;
     height: 100%;
     align-items: center;
+    gap: 0;
   }
 
   .logo-track.animate {
@@ -700,8 +702,11 @@ body {
 
   .logo-item {
     width: var(--item-width, 210px);
+    min-width: var(--item-width, 210px);
+    max-width: var(--item-width, 210px);
     height: 100%;
     padding: 0.75rem 1rem;
+    flex-shrink: 0;
   }
 
   .active-indicator {
