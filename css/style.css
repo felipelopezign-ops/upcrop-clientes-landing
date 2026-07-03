@@ -447,6 +447,11 @@ body {
   100% { transform: translateY(-50%); }
 }
 
+@keyframes scrollLogosHorizontal {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 .logo-track.animate {
   animation: scrollLogos var(--scroll-duration, 30s) linear infinite;
 }
@@ -532,26 +537,82 @@ body {
   }
 
   .logo-column {
-    height: 520px;
-    padding-bottom: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+    width: 100%;
+    min-height: unset;
+    padding-bottom: 0;
   }
 
-  .logo-viewport { width: 100%; max-width: 360px; }
-  .logo-item { width: 300px; }
-  .active-indicator { width: 318px; height: 188px; }
-  .client-logo { max-width: 260px; max-height: 110px; }
-  .logo-item.active .client-logo { max-height: 145px; max-width: 290px; }
-  .logo-item:not(.active) .client-logo { transform: scale(0.93); }
+  .logo-viewport {
+    width: 100%;
+    max-width: 100%;
+    height: 150px;
+    position: relative;
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 6%,
+      black 94%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 6%,
+      black 94%,
+      transparent 100%
+    );
+  }
+
+  .logo-track {
+    flex-direction: row;
+    height: 100%;
+    align-items: center;
+  }
+
+  .logo-track.animate {
+    animation-name: scrollLogosHorizontal;
+  }
+
+  .logo-item {
+    width: var(--item-width, 210px);
+    height: 100%;
+    padding: 0.75rem 1rem;
+  }
+
+  .active-indicator {
+    width: 210px;
+    height: 128px;
+    top: 75px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .client-logo {
+    max-width: 180px;
+    max-height: 88px;
+  }
+
+  .logo-item.active .client-logo {
+    max-height: 100px;
+    max-width: 190px;
+  }
+
+  .logo-item:not(.active) .client-logo {
+    transform: scale(0.93);
+  }
 
   .logo-mobile-controls {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
     z-index: 10;
     pointer-events: auto;
   }

@@ -123,8 +123,10 @@ const CLIENTS = [
 ];
 
 const ITEM_HEIGHT = 210;
+const ITEM_WIDTH_MOBILE = 210;
 const VISIBLE_CENTER_RATIO = 0.5;
 const SCROLL_DURATION = 55;
+const MOBILE_SCROLL_DURATION = 40;
 const MOBILE_BP = '(max-width: 900px)';
 
 let activeIndex = 0;
@@ -163,8 +165,29 @@ function buildLogoTrack() {
 
   logoTrack.style.setProperty('--scroll-duration', `${SCROLL_DURATION}s`);
   logoTrack.style.setProperty('--item-height', `${ITEM_HEIGHT}px`);
+  logoTrack.style.setProperty('--item-width', `${ITEM_WIDTH_MOBILE}px`);
   logoTrack.classList.add('animate');
   totalCountEl.textContent = String(CLIENTS.length).padStart(2, '0');
+}
+
+function applyTrackDimensions() {
+  if (isMobile) {
+    logoTrack.style.setProperty('--item-width', `${ITEM_WIDTH_MOBILE}px`);
+    logoTrack.style.setProperty('--scroll-duration', `${MOBILE_SCROLL_DURATION}s`);
+  } else {
+    logoTrack.style.setProperty('--item-height', `${ITEM_HEIGHT}px`);
+    logoTrack.style.setProperty('--scroll-duration', `${SCROLL_DURATION}s`);
+  }
+}
+
+function resetTrackAnimation() {
+  logoTrack.style.animation = 'none';
+  logoTrack.style.transform = '';
+  requestAnimationFrame(() => {
+    logoTrack.style.animation = '';
+    logoTrack.classList.add('animate');
+    logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
+  });
 }
 
 function updateContent(index, animate = true) {
@@ -195,15 +218,20 @@ function updateContent(index, animate = true) {
 function highlightActiveLogo() {
   const items = logoTrack.querySelectorAll('.logo-item');
   const viewportRect = logoViewport.getBoundingClientRect();
-  const centerY = viewportRect.top + viewportRect.height * VISIBLE_CENTER_RATIO;
+
+  const viewportCenter = isMobile
+    ? viewportRect.left + viewportRect.width / 2
+    : viewportRect.top + viewportRect.height * VISIBLE_CENTER_RATIO;
 
   let closestItem = null;
   let closestDist = Infinity;
 
   items.forEach((item) => {
     const rect = item.getBoundingClientRect();
-    const itemCenter = rect.top + rect.height / 2;
-    const dist = Math.abs(itemCenter - centerY);
+    const itemCenter = isMobile
+      ? rect.left + rect.width / 2
+      : rect.top + rect.height / 2;
+    const dist = Math.abs(itemCenter - viewportCenter);
 
     if (dist < closestDist) {
       closestDist = dist;
@@ -227,14 +255,15 @@ function trackScroll() {
   rafId = requestAnimationFrame(trackScroll);
 }
 
-function getTrackTranslateY() {
+function getTrackTranslate() {
   const style = window.getComputedStyle(logoTrack);
   const matrix = style.transform;
-  if (matrix === 'none') return 0;
+  if (matrix === 'none') return { x: 0, y: 0 };
   const values = matrix.match(/matrix.*\((.+)\)/);
-  if (!values) return 0;
-  const parts = values[1].split(', ');
-  return parseFloat(parts[5] || parts[13] || 0);
+  if (!values) return { x: 0, y: 0 };
+  const parts = values[1].split(', ').map(parseFloat);
+  if (parts.length === 6) return { x: parts[4], y: parts[5] };
+  return { x: parts[12] || 0, y: parts[13] || 0 };
 }
 
 function updatePauseButton() {
@@ -250,32 +279,52 @@ function setPaused(paused) {
 }
 
 function goToPrev() {
+  if (isMobile) setPaused(true);
   jumpToClient((activeIndex - 1 + CLIENTS.length) % CLIENTS.length);
 }
 
 function goToNext() {
+  if (isMobile) setPaused(true);
   jumpToClient((activeIndex + 1) % CLIENTS.length);
 }
 
 function jumpToClient(index) {
   logoTrack.style.animationPlayState = 'paused';
 
-  const offset = index * ITEM_HEIGHT;
-  const currentTransform = getTrackTranslateY();
-  const totalHeight = CLIENTS.length * ITEM_HEIGHT;
+  if (isMobile) {
+    const offset = index * ITEM_WIDTH_MOBILE;
+    const { x: currentX } = getTrackTranslate();
+    const totalWidth = CLIENTS.length * ITEM_WIDTH_MOBILE;
+    const normalizedCurrent = currentX % totalWidth;
+    const diff = Math.abs(normalizedCurrent + offset);
 
-  let targetY = -offset;
-  const normalizedCurrent = currentTransform % totalHeight;
-  const diff = Math.abs(normalizedCurrent + offset);
+    let targetX = -offset;
+    if (diff > totalWidth / 2) {
+      targetX = currentX - (totalWidth - diff);
+    } else {
+      targetX = currentX + (-offset - normalizedCurrent);
+    }
 
-  if (diff > totalHeight / 2) {
-    targetY = currentTransform - (totalHeight - diff);
+    logoTrack.style.animation = 'none';
+    logoTrack.style.transform = `translateX(${targetX}px)`;
   } else {
-    targetY = currentTransform + (-offset - normalizedCurrent);
+    const offset = index * ITEM_HEIGHT;
+    const { y: currentY } = getTrackTranslate();
+    const totalHeight = CLIENTS.length * ITEM_HEIGHT;
+    const normalizedCurrent = currentY % totalHeight;
+    const diff = Math.abs(normalizedCurrent + offset);
+
+    let targetY = -offset;
+    if (diff > totalHeight / 2) {
+      targetY = currentY - (totalHeight - diff);
+    } else {
+      targetY = currentY + (-offset - normalizedCurrent);
+    }
+
+    logoTrack.style.animation = 'none';
+    logoTrack.style.transform = `translateY(${targetY}px)`;
   }
 
-  logoTrack.style.animation = 'none';
-  logoTrack.style.transform = `translateY(${targetY}px)`;
   updateContent(index);
 
   setTimeout(() => {
@@ -286,8 +335,11 @@ function jumpToClient(index) {
 }
 
 function applyViewportMode() {
+  const wasMobile = isMobile;
   isMobile = mobileQuery.matches;
   logoColumn.classList.toggle('is-mobile', isMobile);
+  applyTrackDimensions();
+  if (wasMobile !== isMobile) resetTrackAnimation();
 }
 
 function blockTouchOnLogoZone(e) {
