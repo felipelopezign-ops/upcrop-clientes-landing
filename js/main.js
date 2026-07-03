@@ -138,6 +138,8 @@ let userPaused = false;
 let isSwipeDragging = false;
 let swipeStartX = 0;
 let swipeStartTranslateX = 0;
+let mobileNavLock = false;
+let mobileAutoPlayId = null;
 
 const logoColumn = document.getElementById('logoColumn');
 const logoTrack = document.getElementById('logoTrack');
@@ -163,7 +165,8 @@ function isMobileView() {
 }
 
 function buildLogoTrack() {
-  const allClients = [...CLIENTS, ...CLIENTS];
+  const duplicate = !isMobileView();
+  const allClients = duplicate ? [...CLIENTS, ...CLIENTS] : CLIENTS;
   logoTrack.innerHTML = allClients
     .map(
       (client, i) => `
@@ -249,24 +252,27 @@ function findClosestLogoItem(mobile) {
 }
 
 function syncMobileActiveFromTrack(animateContent = false) {
-  const closestItem = findClosestLogoItem(true);
-  if (!closestItem) return;
-
-  const index = parseInt(closestItem.dataset.index, 10);
-  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
-    item.classList.toggle('active', parseInt(item.dataset.index, 10) === index);
-  });
-
+  if (mobileNavLock) return;
+  const index = getMobileIndexFromTransform();
+  setActiveLogoClass(index);
   if (!isTransitioning && index !== activeIndex) {
     updateContent(index, animateContent);
   }
 }
 
 function highlightActiveLogo() {
-  if (isMobileView() && userPaused && !isSwipeDragging) return;
+  if (isMobileView()) {
+    if (userPaused && !isSwipeDragging) return;
+    if (mobileNavLock) return;
+    const index = getMobileIndexFromTransform();
+    setActiveLogoClass(index);
+    if (!isTransitioning && index !== activeIndex) {
+      updateContent(index);
+    }
+    return;
+  }
 
-  const mobile = isMobileView();
-  const closestItem = findClosestLogoItem(mobile);
+  const closestItem = findClosestLogoItem(false);
   if (!closestItem) return;
 
   logoTrack.querySelectorAll('.logo-item').forEach((item) => {
@@ -295,16 +301,49 @@ function getTrackTranslate() {
   return { x: parts[12] || 0, y: parts[13] || 0 };
 }
 
-function getMobileItemWidth() {
-  const item = logoTrack.querySelector('.logo-item');
-  return item ? item.offsetWidth : ITEM_WIDTH_MOBILE;
-}
-
 function getMobileCenterOffset(index) {
-  const itemWidth = getMobileItemWidth();
+  const normalized = ((index % CLIENTS.length) + CLIENTS.length) % CLIENTS.length;
+  const item = logoTrack.querySelector(`.logo-item[data-index="${normalized}"]`);
+  if (!item) return 0;
   const viewportWidth = logoViewport.clientWidth;
   if (!viewportWidth) return 0;
-  return -(index * itemWidth) + (viewportWidth - itemWidth) / 2;
+  return -item.offsetLeft + (viewportWidth - item.offsetWidth) / 2;
+}
+
+function getMobileIndexFromTransform() {
+  const { x } = getTrackTranslate();
+  const viewportWidth = logoViewport.clientWidth;
+  if (!viewportWidth) return activeIndex;
+
+  const trackCenter = viewportWidth / 2 - x;
+  let closestIndex = activeIndex;
+  let closestDist = Infinity;
+
+  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
+    const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+    const dist = Math.abs(itemCenter - trackCenter);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestIndex = parseInt(item.dataset.index, 10);
+    }
+  });
+
+  return closestIndex;
+}
+
+function stopMobileAutoPlay() {
+  if (mobileAutoPlayId) {
+    clearInterval(mobileAutoPlayId);
+    mobileAutoPlayId = null;
+  }
+}
+
+function startMobileAutoPlay() {
+  stopMobileAutoPlay();
+  mobileAutoPlayId = setInterval(() => {
+    if (!isMobileView() || userPaused || mobileNavLock || isSwipeDragging) return;
+    mobileGoTo((activeIndex + 1) % CLIENTS.length);
+  }, 3500);
 }
 
 function enterMobileManualMode() {
@@ -314,6 +353,10 @@ function enterMobileManualMode() {
 }
 
 function resumeMobileInfiniteScroll() {
+  if (isMobileView()) {
+    startMobileAutoPlay();
+    return;
+  }
   logoTrack.style.transition = '';
   logoTrack.style.transform = '';
   logoTrack.style.animation = '';
@@ -324,6 +367,8 @@ function resumeMobileInfiniteScroll() {
 function mobileGoTo(index, animateContent = true) {
   const normalized = ((index % CLIENTS.length) + CLIENTS.length) % CLIENTS.length;
 
+  mobileNavLock = true;
+  stopMobileAutoPlay();
   logoTrack.classList.remove('animate');
   logoTrack.style.animation = 'none';
   logoTrack.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
@@ -333,13 +378,16 @@ function mobileGoTo(index, animateContent = true) {
 
   setTimeout(() => {
     logoTrack.style.transition = '';
-  }, 460);
+    mobileNavLock = false;
+    if (isMobileView() && !userPaused) startMobileAutoPlay();
+  }, 470);
 }
 
 function mobileStep(delta) {
+  const nextIndex = (activeIndex + delta + CLIENTS.length) % CLIENTS.length;
   userPaused = true;
   updatePauseButton();
-  mobileGoTo(activeIndex + delta);
+  mobileGoTo(nextIndex);
 }
 
 function updatePauseButton() {
@@ -359,6 +407,7 @@ function setPaused(paused) {
   }
 
   if (paused) {
+    stopMobileAutoPlay();
     enterMobileManualMode();
   } else {
     resumeMobileInfiniteScroll();
@@ -412,16 +461,15 @@ function jumpToClient(index) {
 function initMobileMode() {
   userPaused = true;
   updatePauseButton();
+  stopMobileAutoPlay();
   logoTrack.classList.remove('animate');
   logoTrack.style.animation = 'none';
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      mobileGoTo(activeIndex, false);
-    });
-  });
+  logoTrack.style.transition = 'none';
+  logoTrack.style.transform = `translateX(${getMobileCenterOffset(activeIndex)}px)`;
 }
 
 function initDesktopMode() {
+  stopMobileAutoPlay();
   logoTrack.style.transition = '';
   logoTrack.style.animation = '';
   logoTrack.style.transform = '';
@@ -431,15 +479,21 @@ function initDesktopMode() {
 
 function applyViewportMode() {
   const wasMobile = isMobile;
+  const savedIndex = activeIndex;
   isMobile = mobileQuery.matches;
   logoColumn.classList.toggle('is-mobile', isMobile);
+  buildLogoTrack();
   applyTrackDimensions();
+  updateContent(savedIndex, false);
+  setActiveLogoClass(savedIndex);
 
   if (isMobile) {
     initMobileMode();
-  } else if (wasMobile) {
-    userPaused = false;
-    updatePauseButton();
+  } else {
+    if (wasMobile) {
+      userPaused = false;
+      updatePauseButton();
+    }
     initDesktopMode();
   }
 }
@@ -454,7 +508,7 @@ function onSwipeStart(e) {
 
   enterMobileManualMode();
   swipeStartX = e.touches[0].clientX;
-  swipeStartTranslateX = getMobileCenterOffset(activeIndex);
+  swipeStartTranslateX = getTrackTranslate().x;
   logoTrack.style.transition = 'none';
 }
 
@@ -519,9 +573,6 @@ function initClickHandlers() {
 }
 
 function init() {
-  buildLogoTrack();
-  updateContent(0, false);
-  setActiveLogoClass(0);
   initClickHandlers();
   applyViewportMode();
   rafId = requestAnimationFrame(trackScroll);
@@ -530,6 +581,7 @@ function init() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
+    stopMobileAutoPlay();
     if (isMobileView() && userPaused) enterMobileManualMode();
     else logoTrack.style.animationPlayState = 'paused';
     cancelAnimationFrame(rafId);
@@ -537,7 +589,7 @@ document.addEventListener('visibilitychange', () => {
   } else {
     if (isMobileView()) {
       if (userPaused) enterMobileManualMode();
-      else resumeMobileInfiniteScroll();
+      else startMobileAutoPlay();
     } else {
       logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
     }
@@ -546,9 +598,9 @@ document.addEventListener('visibilitychange', () => {
 });
 
 window.addEventListener('resize', () => {
-  if (isMobileView() && userPaused) {
-    mobileGoTo(activeIndex, false);
-  }
+  if (!isMobileView() || !userPaused || mobileNavLock) return;
+  logoTrack.style.transition = 'none';
+  logoTrack.style.transform = `translateX(${getMobileCenterOffset(activeIndex)}px)`;
 });
 
 init();
