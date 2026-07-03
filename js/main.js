@@ -7,7 +7,7 @@ const CLIENTS = [
     description:
       'Con Exser implementamos soluciones digitales enfocadas en el control de calidad desde el huerto hasta la planta de empaque (packing), además de la digitalización de datos críticos para el comercio exterior. Esto les permite centralizar la información de sus productores y tener una trazabilidad en tiempo real de la fruta destinada a exportación, reduciendo errores administrativos y optimizando los tiempos de despacho.',
     services: ['Control de Calidad', 'Trazabilidad', 'Comercio Exterior'],
-    logo: 'assets/logos/exser.svg',
+    logo: 'assets/logos/exser.png',
     logoAlt: 'Exser',
   },
   {

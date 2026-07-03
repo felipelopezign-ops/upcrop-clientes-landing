@@ -166,15 +166,15 @@ body {
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    black 8%,
-    black 92%,
+    black 4%,
+    black 96%,
     transparent 100%
   );
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    black 8%,
-    black 92%,
+    black 4%,
+    black 96%,
     transparent 100%
   );
 }
@@ -199,9 +199,9 @@ body {
   justify-content: center;
   padding: 1rem 1.5rem;
   background: transparent;
-  transition: transform 0.55s var(--ease-out), opacity 0.5s var(--ease), filter 0.5s var(--ease);
-  opacity: 0.72;
-  filter: grayscale(0.1) saturate(0.9);
+  transition: transform 0.55s var(--ease-out);
+  opacity: 1;
+  filter: none;
   cursor: pointer;
 }
 
@@ -212,27 +212,29 @@ body {
   height: auto;
   object-fit: contain;
   pointer-events: none;
-  background: transparent;
-  transition: max-height 0.55s var(--ease-out), transform 0.55s var(--ease-out), filter 0.5s var(--ease);
+  opacity: 1;
+  filter: none;
+  transition: max-height 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+}
+
+.logo-item:not(.active) .client-logo {
+  transform: scale(0.88);
 }
 
 .logo-item.active {
-  opacity: 1;
-  filter: none;
-  transform: scale(1.06);
+  transform: scale(1);
   z-index: 2;
 }
 
 .logo-item.active .client-logo {
-  max-height: 148px;
-  max-width: 300px;
-  transform: scale(1.04);
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
+  max-height: 152px;
+  max-width: 310px;
+  transform: scale(1);
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.1));
 }
 
-.logo-item:hover:not(.active) {
-  opacity: 0.88;
-  filter: grayscale(0) saturate(1);
+.logo-item:hover:not(.active) .client-logo {
+  transform: scale(0.94);
 }
 
 .active-indicator {
@@ -468,10 +470,11 @@ body {
 
   .logo-column { height: 460px; }
   .logo-viewport { width: 100%; max-width: 340px; }
-  .logo-item { width: 280px; opacity: 0.8; }
+  .logo-item { width: 280px; }
   .active-indicator { width: 298px; height: 158px; }
-  .client-logo { max-width: 220px; max-height: 88px; }
-  .logo-item.active .client-logo { max-height: 110px; max-width: 240px; }
+  .client-logo { max-width: 220px; max-height: 92px; }
+  .logo-item.active .client-logo { max-height: 118px; max-width: 250px; }
+  .logo-item:not(.active) .client-logo { transform: scale(0.9); }
 
   .content-column { padding: 0; }
   .closing { padding: 1.5rem 1.5rem 3rem; }
