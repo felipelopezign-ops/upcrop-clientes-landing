@@ -303,7 +303,7 @@ function findClosestLogoItem() {
 }
 
 function highlightActiveLogo() {
-  if (isMobile) return;
+  if (isMobile || userPaused) return;
 
   const closestItem = findClosestLogoItem();
   if (!closestItem) return;
@@ -368,7 +368,15 @@ function setPaused(paused) {
   updatePauseButton();
 
   if (!isMobile) {
-    logoTrack.style.animationPlayState = paused ? 'paused' : 'running';
+    if (paused) {
+      logoTrack.style.animationPlayState = 'paused';
+    } else {
+      logoTrack.style.transition = '';
+      logoTrack.style.transform = '';
+      logoTrack.style.animation = '';
+      logoTrack.classList.add('animate');
+      logoTrack.style.animationPlayState = 'running';
+    }
     return;
   }
 
@@ -377,47 +385,54 @@ function setPaused(paused) {
 }
 
 function goToPrev() {
+  userPaused = true;
+  updatePauseButton();
+
   if (isMobile) {
     mobileStep(-1);
     return;
   }
-  jumpToClient(normalizeIndex(activeIndex - 1));
+  setDesktopClient(activeIndex - 1);
 }
 
 function goToNext() {
+  userPaused = true;
+  updatePauseButton();
+
   if (isMobile) {
     mobileStep(1);
     return;
   }
-  jumpToClient(normalizeIndex(activeIndex + 1));
+  setDesktopClient(activeIndex + 1);
+}
+
+function setDesktopClient(index, animate = true) {
+  const n = normalizeIndex(index);
+  const viewportCenter = logoViewport.clientHeight * VISIBLE_CENTER_RATIO;
+  const itemCenter = n * ITEM_HEIGHT + ITEM_HEIGHT / 2;
+  const targetY = viewportCenter - itemCenter;
+
+  logoTrack.classList.remove('animate');
+  logoTrack.style.animation = 'none';
+  logoTrack.style.animationPlayState = 'paused';
+  logoTrack.style.transition = animate ? 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)' : 'none';
+  logoTrack.style.transform = `translate3d(0, ${targetY}px, 0)`;
+  setActiveLogoClass(n);
+  updateContent(n, animate);
+
+  if (animate) {
+    window.setTimeout(() => {
+      logoTrack.style.transition = '';
+    }, 460);
+  } else {
+    logoTrack.style.transition = '';
+  }
 }
 
 function jumpToClient(index) {
-  logoTrack.style.animationPlayState = 'paused';
-
-  const offset = index * ITEM_HEIGHT;
-  const { y: currentY } = getTrackTranslate();
-  const totalHeight = CLIENTS.length * ITEM_HEIGHT;
-  const normalizedCurrent = currentY % totalHeight;
-  const diff = Math.abs(normalizedCurrent + offset);
-
-  let targetY = -offset;
-  if (diff > totalHeight / 2) {
-    targetY = currentY - (totalHeight - diff);
-  } else {
-    targetY = currentY + (-offset - normalizedCurrent);
-  }
-
-  logoTrack.style.animation = 'none';
-  logoTrack.style.transform = `translateY(${targetY}px)`;
-  setActiveLogoClass(index);
-  updateContent(index);
-
-  window.setTimeout(() => {
-    logoTrack.style.animation = '';
-    logoTrack.style.transform = '';
-    logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
-  }, 50);
+  userPaused = true;
+  updatePauseButton();
+  setDesktopClient(index);
 }
 
 function initMobileMode() {
