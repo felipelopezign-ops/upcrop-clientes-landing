@@ -533,23 +533,50 @@ body {
 
 .logo-column.is-mobile .logo-viewport,
 .logo-column.is-mobile .logo-track,
-.logo-column.is-mobile .logo-item {
+.logo-column.is-mobile .logo-item,
+.logo-column.is-mobile .logo-touch-shield {
   touch-action: none;
-  pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
+.logo-column.is-mobile .logo-viewport,
+.logo-column.is-mobile .logo-track,
 .logo-column.is-mobile .logo-item {
-  cursor: default;
+  pointer-events: none;
+}
+
+.logo-touch-shield {
+  display: none;
+}
+
+.logo-column.is-mobile .logo-touch-shield {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: auto;
+  background: transparent;
+  touch-action: none;
 }
 
 .logo-column.is-mobile .logo-track.animate:hover {
-  animation-play-state: running;
+  animation-play-state: inherit;
 }
 
 .logo-column.is-mobile.user-paused .logo-track {
   animation-play-state: paused !important;
+}
+
+.logo-column.is-mobile .logo-item {
+  cursor: default;
+  opacity: 1;
+  filter: none;
+}
+
+.logo-column.is-mobile .logo-item.active {
+  transform: none;
 }
 
 /* ── Responsive ── */
@@ -648,6 +675,10 @@ body {
 
   .logo-item:not(.active) .client-logo {
     transform: scale(0.93);
+  }
+
+  .logo-track.animate:hover {
+    animation-play-state: inherit;
   }
 
   .logo-mobile-controls {

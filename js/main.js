@@ -126,7 +126,7 @@ const ITEM_HEIGHT = 210;
 const ITEM_WIDTH_MOBILE = 210;
 const VISIBLE_CENTER_RATIO = 0.5;
 const SCROLL_DURATION = 55;
-const MOBILE_SCROLL_DURATION = 40;
+const MOBILE_SCROLL_DURATION = 45;
 const MOBILE_BP = '(max-width: 900px)';
 
 let activeIndex = 0;
@@ -138,6 +138,7 @@ let userPaused = false;
 const logoColumn = document.getElementById('logoColumn');
 const logoTrack = document.getElementById('logoTrack');
 const logoViewport = document.getElementById('logoViewport');
+const logoTouchShield = document.getElementById('logoTouchShield');
 const logoPrev = document.getElementById('logoPrev');
 const logoNext = document.getElementById('logoNext');
 const logoPause = document.getElementById('logoPause');
@@ -152,6 +153,10 @@ const currentIndexEl = document.getElementById('currentIndex');
 const totalCountEl = document.getElementById('totalCount');
 
 const mobileQuery = window.matchMedia(MOBILE_BP);
+
+function isMobileView() {
+  return mobileQuery.matches;
+}
 
 function buildLogoTrack() {
   const allClients = [...CLIENTS, ...CLIENTS];
@@ -172,23 +177,13 @@ function buildLogoTrack() {
 }
 
 function applyTrackDimensions() {
-  if (isMobile) {
+  if (isMobileView()) {
     logoTrack.style.setProperty('--item-width', `${ITEM_WIDTH_MOBILE}px`);
     logoTrack.style.setProperty('--scroll-duration', `${MOBILE_SCROLL_DURATION}s`);
   } else {
     logoTrack.style.setProperty('--item-height', `${ITEM_HEIGHT}px`);
     logoTrack.style.setProperty('--scroll-duration', `${SCROLL_DURATION}s`);
   }
-}
-
-function resetTrackAnimation() {
-  logoTrack.style.animation = 'none';
-  logoTrack.style.transform = '';
-  requestAnimationFrame(() => {
-    logoTrack.style.animation = '';
-    logoTrack.classList.add('animate');
-    logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
-  });
 }
 
 function updateContent(index, animate = true) {
@@ -216,11 +211,15 @@ function updateContent(index, animate = true) {
   }
 }
 
-function isMobileView() {
-  return mobileQuery.matches;
+function setActiveLogoClass(index) {
+  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
+    item.classList.toggle('active', parseInt(item.dataset.index, 10) === index);
+  });
 }
 
 function highlightActiveLogo() {
+  if (isMobileView() && userPaused) return;
+
   const mobile = isMobileView();
   const items = logoTrack.querySelectorAll('.logo-item');
   const viewportRect = logoViewport.getBoundingClientRect();
@@ -256,11 +255,6 @@ function highlightActiveLogo() {
   }
 }
 
-function getMobileCenterOffset(index) {
-  const viewportWidth = logoViewport.clientWidth;
-  return -(index * ITEM_WIDTH_MOBILE) + viewportWidth / 2 - ITEM_WIDTH_MOBILE / 2;
-}
-
 function trackScroll() {
   highlightActiveLogo();
   rafId = requestAnimationFrame(trackScroll);
@@ -277,6 +271,36 @@ function getTrackTranslate() {
   return { x: parts[12] || 0, y: parts[13] || 0 };
 }
 
+function getMobileCenterOffset(index) {
+  const viewportWidth = logoViewport.clientWidth;
+  return -(index * ITEM_WIDTH_MOBILE) + viewportWidth / 2 - ITEM_WIDTH_MOBILE / 2;
+}
+
+function freezeMobileTrack() {
+  const { x } = getTrackTranslate();
+  logoTrack.style.animation = 'none';
+  logoTrack.style.transform = `translateX(${x}px)`;
+}
+
+function resumeMobileInfiniteScroll() {
+  logoTrack.style.transition = '';
+  logoTrack.style.animation = '';
+  logoTrack.style.transform = '';
+  logoTrack.classList.add('animate');
+  logoTrack.style.animationPlayState = 'running';
+}
+
+function mobileGoTo(index, animateContent = true) {
+  freezeMobileTrack();
+  logoTrack.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+  logoTrack.style.transform = `translateX(${getMobileCenterOffset(index)}px)`;
+  setActiveLogoClass(index);
+  updateContent(index, animateContent);
+  setTimeout(() => {
+    logoTrack.style.transition = '';
+  }, 460);
+}
+
 function updatePauseButton() {
   logoPause.classList.toggle('is-paused', userPaused);
   logoPause.setAttribute('aria-label', userPaused ? 'Reanudar animación' : 'Pausar animación');
@@ -288,62 +312,79 @@ function setPaused(paused) {
   userPaused = paused;
   updatePauseButton();
 
-  if (isMobileView() && !paused) {
-    logoTrack.style.animation = '';
-    logoTrack.style.transform = '';
-    logoTrack.classList.add('animate');
-    logoTrack.style.animationPlayState = 'running';
-  } else {
+  if (!isMobileView()) {
     logoTrack.style.animationPlayState = paused ? 'paused' : 'running';
+    return;
+  }
+
+  if (paused) {
+    freezeMobileTrack();
+    logoTrack.style.animationPlayState = 'paused';
+  } else {
+    resumeMobileInfiniteScroll();
   }
 }
 
 function goToPrev() {
-  if (isMobileView()) setPaused(true);
+  if (isMobileView()) {
+    setPaused(true);
+    mobileGoTo((activeIndex - 1 + CLIENTS.length) % CLIENTS.length);
+    return;
+  }
   jumpToClient((activeIndex - 1 + CLIENTS.length) % CLIENTS.length);
 }
 
 function goToNext() {
-  if (isMobileView()) setPaused(true);
+  if (isMobileView()) {
+    setPaused(true);
+    mobileGoTo((activeIndex + 1) % CLIENTS.length);
+    return;
+  }
   jumpToClient((activeIndex + 1) % CLIENTS.length);
 }
 
 function jumpToClient(index) {
-  const mobile = isMobileView();
   logoTrack.style.animationPlayState = 'paused';
 
-  if (mobile) {
-    logoTrack.style.animation = 'none';
-    logoTrack.style.transform = `translateX(${getMobileCenterOffset(index)}px)`;
+  const offset = index * ITEM_HEIGHT;
+  const { y: currentY } = getTrackTranslate();
+  const totalHeight = CLIENTS.length * ITEM_HEIGHT;
+  const normalizedCurrent = currentY % totalHeight;
+  const diff = Math.abs(normalizedCurrent + offset);
+
+  let targetY = -offset;
+  if (diff > totalHeight / 2) {
+    targetY = currentY - (totalHeight - diff);
   } else {
-    const offset = index * ITEM_HEIGHT;
-    const { y: currentY } = getTrackTranslate();
-    const totalHeight = CLIENTS.length * ITEM_HEIGHT;
-    const normalizedCurrent = currentY % totalHeight;
-    const diff = Math.abs(normalizedCurrent + offset);
-
-    let targetY = -offset;
-    if (diff > totalHeight / 2) {
-      targetY = currentY - (totalHeight - diff);
-    } else {
-      targetY = currentY + (-offset - normalizedCurrent);
-    }
-
-    logoTrack.style.animation = 'none';
-    logoTrack.style.transform = `translateY(${targetY}px)`;
+    targetY = currentY + (-offset - normalizedCurrent);
   }
 
-  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
-    item.classList.toggle('active', parseInt(item.dataset.index, 10) === index);
-  });
+  logoTrack.style.animation = 'none';
+  logoTrack.style.transform = `translateY(${targetY}px)`;
+  setActiveLogoClass(index);
   updateContent(index);
 
   setTimeout(() => {
-    if (mobile && userPaused) return;
     logoTrack.style.animation = '';
     logoTrack.style.transform = '';
     logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
   }, 50);
+}
+
+function initMobileMode() {
+  userPaused = true;
+  updatePauseButton();
+  logoTrack.classList.add('animate');
+  freezeMobileTrack();
+  mobileGoTo(activeIndex, false);
+}
+
+function initDesktopMode() {
+  logoTrack.style.transition = '';
+  logoTrack.style.animation = '';
+  logoTrack.style.transform = '';
+  logoTrack.classList.add('animate');
+  logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
 }
 
 function applyViewportMode() {
@@ -351,13 +392,21 @@ function applyViewportMode() {
   isMobile = mobileQuery.matches;
   logoColumn.classList.toggle('is-mobile', isMobile);
   applyTrackDimensions();
-  if (wasMobile !== isMobile) resetTrackAnimation();
-  if (isMobile) highlightActiveLogo();
+
+  if (isMobile) {
+    initMobileMode();
+  } else if (wasMobile) {
+    userPaused = false;
+    updatePauseButton();
+    initDesktopMode();
+  }
 }
 
-function blockTouchOnLogoZone(e) {
+function blockTouch(e) {
   if (!isMobileView()) return;
+  if (e.target.closest('.logo-ctrl')) return;
   e.preventDefault();
+  e.stopPropagation();
 }
 
 function initClickHandlers() {
@@ -368,19 +417,32 @@ function initClickHandlers() {
     jumpToClient(parseInt(item.dataset.index, 10));
   });
 
-  logoPrev.addEventListener('click', goToPrev);
-  logoNext.addEventListener('click', goToNext);
-  logoPause.addEventListener('click', () => setPaused(!userPaused));
+  logoPrev.addEventListener('click', (e) => {
+    e.stopPropagation();
+    goToPrev();
+  });
+  logoNext.addEventListener('click', (e) => {
+    e.stopPropagation();
+    goToNext();
+  });
+  logoPause.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setPaused(!userPaused);
+  });
 
-  logoViewport.addEventListener('touchstart', blockTouchOnLogoZone, { passive: false });
-  logoViewport.addEventListener('touchmove', blockTouchOnLogoZone, { passive: false });
-  logoTrack.addEventListener('touchstart', blockTouchOnLogoZone, { passive: false });
-  logoTrack.addEventListener('touchmove', blockTouchOnLogoZone, { passive: false });
+  const touchBlockers = [logoViewport, logoTrack, logoTouchShield, logoColumn];
+  touchBlockers.forEach((el) => {
+    if (!el) return;
+    ['touchstart', 'touchmove', 'touchend'].forEach((evt) => {
+      el.addEventListener(evt, blockTouch, { passive: false, capture: true });
+    });
+  });
 }
 
 function init() {
   buildLogoTrack();
   updateContent(0, false);
+  setActiveLogoClass(0);
   initClickHandlers();
   applyViewportMode();
   rafId = requestAnimationFrame(trackScroll);
@@ -389,14 +451,19 @@ function init() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
+    if (isMobileView() && !userPaused) freezeMobileTrack();
     logoTrack.style.animationPlayState = 'paused';
     cancelAnimationFrame(rafId);
     rafId = null;
   } else {
-    logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
+    if (isMobileView()) {
+      if (userPaused) freezeMobileTrack();
+      else resumeMobileInfiniteScroll();
+    } else {
+      logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
+    }
     if (!rafId) rafId = requestAnimationFrame(trackScroll);
   }
 });
 
 init();
-
