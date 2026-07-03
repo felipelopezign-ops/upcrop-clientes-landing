@@ -122,7 +122,7 @@ const CLIENTS = [
   },
 ];
 
-const ITEM_HEIGHT = 150;
+const ITEM_HEIGHT = 170;
 const VISIBLE_CENTER_RATIO = 0.5;
 const SCROLL_DURATION = 55;
 
