@@ -531,7 +531,11 @@ body {
     gap: 1.5rem;
   }
 
-  .logo-column { height: 520px; }
+  .logo-column {
+    height: 520px;
+    padding-bottom: 64px;
+  }
+
   .logo-viewport { width: 100%; max-width: 360px; }
   .logo-item { width: 300px; }
   .active-indicator { width: 318px; height: 188px; }
@@ -544,16 +548,12 @@ body {
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    margin-top: 1.25rem;
-    position: relative;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 10;
     pointer-events: auto;
-  }
-
-  .logo-column {
-    flex-direction: column;
-    height: auto;
-    min-height: 420px;
   }
 
   .content-column { padding: 0; }
