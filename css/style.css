@@ -626,6 +626,24 @@ body {
   transform: none;
 }
 
+.logo-column.is-mobile .logo-track {
+  transform: none !important;
+  animation: none !important;
+  justify-content: center;
+  width: 100%;
+}
+
+.logo-column.is-mobile .logo-item {
+  display: none;
+  width: 100%;
+  max-width: var(--item-width, 210px);
+  min-width: 0;
+}
+
+.logo-column.is-mobile .logo-item.is-visible {
+  display: flex;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .header { padding: 1rem 1.5rem; }

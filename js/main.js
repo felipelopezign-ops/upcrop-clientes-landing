@@ -166,26 +166,44 @@ function isMobileView() {
 }
 
 function buildLogoTrack() {
-  const duplicate = !isMobileView();
-  const allClients = duplicate ? [...CLIENTS, ...CLIENTS] : CLIENTS;
-  logoTrack.innerHTML = allClients
-    .map(
+  if (isMobileView()) {
+    logoTrack.innerHTML = CLIENTS.map(
       (client, i) => `
+    <div class="logo-item${i === mobileSlideIndex ? ' active is-visible' : ''}" data-index="${i}" data-client="${client.id}">
+      <img src="${client.logo}" alt="${client.logoAlt}" class="client-logo" loading="lazy" draggable="false" />
+    </div>`
+    ).join('');
+    logoTrack.classList.remove('animate');
+    logoTrack.style.transform = 'none';
+    logoTrack.style.animation = 'none';
+    logoTrack.style.transition = 'none';
+  } else {
+    const allClients = [...CLIENTS, ...CLIENTS];
+    logoTrack.innerHTML = allClients
+      .map(
+        (client, i) => `
     <div class="logo-item" data-index="${i % CLIENTS.length}" data-orig="${i}" data-client="${client.id}">
       <img src="${client.logo}" alt="${client.logoAlt}" class="client-logo" loading="lazy" draggable="false" />
     </div>`
-    )
-    .join('');
+      )
+      .join('');
+    logoTrack.classList.add('animate');
+  }
 
   logoTrack.style.setProperty('--scroll-duration', `${SCROLL_DURATION}s`);
   logoTrack.style.setProperty('--item-height', `${ITEM_HEIGHT}px`);
   logoTrack.style.setProperty('--item-width', `${ITEM_WIDTH_MOBILE}px`);
-  if (duplicate) {
-    logoTrack.classList.add('animate');
-  } else {
-    logoTrack.classList.remove('animate');
-  }
   totalCountEl.textContent = String(CLIENTS.length).padStart(2, '0');
+}
+
+function showMobileLogo(index) {
+  const normalized = ((index % CLIENTS.length) + CLIENTS.length) % CLIENTS.length;
+  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
+    const itemIndex = parseInt(item.dataset.index, 10);
+    const visible = itemIndex === normalized;
+    item.classList.toggle('is-visible', visible);
+    item.classList.toggle('active', visible);
+  });
 }
 
 function applyTrackDimensions() {
@@ -199,10 +217,11 @@ function applyTrackDimensions() {
 }
 
 function updateContent(index, animate = true) {
-  if (index === activeIndex && animate) return;
-  activeIndex = index;
-  if (isMobileView()) mobileSlideIndex = index;
-  const client = CLIENTS[index];
+  const normalized = ((index % CLIENTS.length) + CLIENTS.length) % CLIENTS.length;
+  if (normalized === activeIndex && animate) return;
+  activeIndex = normalized;
+  if (isMobileView()) mobileSlideIndex = normalized;
+  const client = CLIENTS[normalized];
 
   const applyContent = () => {
     contentBadge.textContent = client.focus;
@@ -210,7 +229,7 @@ function updateContent(index, animate = true) {
     contentSubtitle.textContent = client.subtitle;
     contentDesc.textContent = client.description;
     serviceTags.innerHTML = client.services.map((s) => `<li>${s}</li>`).join('');
-    currentIndexEl.textContent = String(index + 1).padStart(2, '0');
+    currentIndexEl.textContent = String(normalized + 1).padStart(2, '0');
     contentInner.classList.remove('content-fade');
     isTransitioning = false;
   };
@@ -257,14 +276,8 @@ function findClosestLogoItem(mobile) {
   return closestItem;
 }
 
-function syncMobileActiveFromTrack(animateContent = false) {
-  if (mobileNavLock || !isSwipeDragging) return;
-  const index = getMobileIndexFromTransform();
-  setActiveLogoClass(index);
-  if (!isTransitioning && index !== mobileSlideIndex) {
-    mobileSlideIndex = index;
-    updateContent(index, animateContent);
-  }
+function syncMobileActiveFromTrack() {
+  /* móvil: logo y texto van ligados por mobileSlideIndex, sin detección automática */
 }
 
 function highlightActiveLogo() {
@@ -299,66 +312,8 @@ function getTrackTranslate() {
   return { x: parts[12] || 0, y: parts[13] || 0 };
 }
 
-function getMobileCenterOffset(index) {
-  const normalized = ((index % CLIENTS.length) + CLIENTS.length) % CLIENTS.length;
-  const itemWidth = ITEM_WIDTH_MOBILE;
-  const viewportWidth = logoViewport.clientWidth;
-  if (!viewportWidth) return 0;
-  return -(normalized * itemWidth) + (viewportWidth - itemWidth) / 2;
-}
-
-function positionMobileTrack(index, animate = false) {
-  const offset = getMobileCenterOffset(index);
-  logoTrack.style.animation = 'none';
-  logoTrack.classList.remove('animate');
-  logoTrack.style.transition = animate
-    ? 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-    : 'none';
-  logoTrack.style.transform = `translate3d(${offset}px, 0, 0)`;
-  if (!animate) {
-    void logoTrack.offsetWidth;
-    logoTrack.style.transition = '';
-  }
-}
-
-function getMobileIndexFromTransform() {
-  const { x } = getTrackTranslate();
-  const viewportWidth = logoViewport.clientWidth;
-  if (!viewportWidth) return activeIndex;
-
-  const trackCenter = viewportWidth / 2 - x;
-  let closestIndex = activeIndex;
-  let closestDist = Infinity;
-
-  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
-    const itemCenter = item.offsetLeft + item.offsetWidth / 2;
-    const dist = Math.abs(itemCenter - trackCenter);
-    if (dist < closestDist) {
-      closestDist = dist;
-      closestIndex = parseInt(item.dataset.index, 10);
-    }
-  });
-
-  return closestIndex;
-}
-
-function stopMobileAutoPlay() {
-  if (mobileAutoPlayId) {
-    clearInterval(mobileAutoPlayId);
-    mobileAutoPlayId = null;
-  }
-}
-
-function startMobileAutoPlay() {
-  stopMobileAutoPlay();
-  mobileAutoPlayId = window.setInterval(() => {
-    if (!isMobileView() || userPaused || mobileNavLock || isSwipeDragging) return;
-    mobileGoTo((mobileSlideIndex + 1) % CLIENTS.length);
-  }, 3500);
-}
-
 function enterMobileManualMode() {
-  positionMobileTrack(mobileSlideIndex, false);
+  showMobileLogo(mobileSlideIndex);
 }
 
 function resumeMobileInfiniteScroll() {
@@ -380,15 +335,28 @@ function mobileGoTo(index, animateContent = true) {
   mobileNavLock = true;
   stopMobileAutoPlay();
 
-  positionMobileTrack(normalized, true);
-  setActiveLogoClass(normalized);
+  showMobileLogo(normalized);
   updateContent(normalized, animateContent);
 
   window.setTimeout(() => {
-    logoTrack.style.transition = '';
     mobileNavLock = false;
     if (isMobileView() && !userPaused) startMobileAutoPlay();
-  }, 420);
+  }, animateContent ? 360 : 0);
+}
+
+function stopMobileAutoPlay() {
+  if (mobileAutoPlayId) {
+    clearInterval(mobileAutoPlayId);
+    mobileAutoPlayId = null;
+  }
+}
+
+function startMobileAutoPlay() {
+  stopMobileAutoPlay();
+  mobileAutoPlayId = window.setInterval(() => {
+    if (!isMobileView() || userPaused || mobileNavLock || isSwipeDragging) return;
+    mobileGoTo((mobileSlideIndex + 1) % CLIENTS.length);
+  }, 3500);
 }
 
 function mobileStep(delta) {
@@ -471,12 +439,8 @@ function initMobileMode() {
   mobileSlideIndex = activeIndex;
   updatePauseButton();
   stopMobileAutoPlay();
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      positionMobileTrack(mobileSlideIndex, false);
-      setActiveLogoClass(mobileSlideIndex);
-    });
-  });
+  showMobileLogo(mobileSlideIndex);
+  updateContent(mobileSlideIndex, false);
 }
 
 function initDesktopMode() {
@@ -512,25 +476,13 @@ function applyViewportMode() {
 
 function onSwipeStart(e) {
   if (!isMobileView() || e.touches.length !== 1) return;
-
   isSwipeDragging = true;
-  logoColumn.classList.add('is-swipe-dragging');
-  userPaused = true;
-  updatePauseButton();
-
-  enterMobileManualMode();
   swipeStartX = e.touches[0].clientX;
-  swipeStartTranslateX = getTrackTranslate().x;
-  logoTrack.style.transition = 'none';
 }
 
 function onSwipeMove(e) {
   if (!isMobileView() || !isSwipeDragging) return;
-
   e.preventDefault();
-  const deltaX = e.touches[0].clientX - swipeStartX;
-  logoTrack.style.transform = `translate3d(${swipeStartTranslateX + deltaX}px, 0, 0)`;
-  syncMobileActiveFromTrack(false);
 }
 
 function onSwipeEnd(e) {
@@ -540,15 +492,8 @@ function onSwipeEnd(e) {
   logoColumn.classList.remove('is-swipe-dragging');
 
   const deltaX = e.changedTouches[0].clientX - swipeStartX;
-  let targetIndex = mobileSlideIndex;
-
-  if (deltaX <= -SWIPE_THRESHOLD) {
-    targetIndex = (mobileSlideIndex + 1) % CLIENTS.length;
-  } else if (deltaX >= SWIPE_THRESHOLD) {
-    targetIndex = (mobileSlideIndex - 1 + CLIENTS.length) % CLIENTS.length;
-  }
-
-  mobileGoTo(targetIndex, targetIndex !== mobileSlideIndex);
+  if (deltaX <= -SWIPE_THRESHOLD) mobileStep(1);
+  else if (deltaX >= SWIPE_THRESHOLD) mobileStep(-1);
 }
 
 function initMobileSwipe() {
@@ -562,9 +507,16 @@ function initMobileSwipe() {
 
 function bindArrowButton(button, direction) {
   if (!button) return;
+  let handled = false;
+  button.addEventListener('pointerdown', (e) => {
+    handled = false;
+    e.stopPropagation();
+  });
   button.addEventListener('pointerup', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (handled || mobileNavLock) return;
+    handled = true;
     if (direction < 0) goToPrev();
     else goToNext();
   });
@@ -615,7 +567,7 @@ document.addEventListener('visibilitychange', () => {
 
 window.addEventListener('resize', () => {
   if (!isMobileView() || mobileNavLock) return;
-  positionMobileTrack(mobileSlideIndex, false);
+  showMobileLogo(mobileSlideIndex);
 });
 
 init();
