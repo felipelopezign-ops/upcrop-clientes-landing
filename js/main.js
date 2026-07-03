@@ -1,88 +1,134 @@
 const CLIENTS = [
   {
-    id: 'korta',
-    name: 'Korta Wines',
-    sector: 'Vitivinicultura',
-    description:
-      'Acompañamos a Korta Wines en la digitalización de sus procesos de control de calidad en uva de mesa, centralizando reportes de campo y packing para decisiones más rápidas durante la temporada exportadora.',
-    services: ['Control de Calidad', 'Digitalización de Data', 'Gestión de Packing'],
-    logoHTML: '<span class="brand-korta">KORTAWINES</span>',
-  },
-  {
-    id: 'torreon',
-    name: 'El Torreón',
-    sector: 'Exportadora frutícola',
-    description:
-      'Desplegamos equipos de supervisión de cosecha y coordinación en terreno para optimizar rendimientos y garantizar el cumplimiento de estándares de exportación en sus operaciones de campo.',
-    services: ['Supervisión de Cosecha', 'Coordinación de Cosecha', 'Estimación de Cosecha'],
-    logoHTML: `
-      <div class="brand-torreon">
-        <svg class="brand-torreon-icon" viewBox="0 0 36 36" fill="none">
-          <path d="M18 4L6 32h24L18 4z" fill="#0A0A0A"/>
-          <rect x="14" y="20" width="8" height="12" fill="#fff"/>
-        </svg>
-        <span class="brand-torreon-text">EL TORREÓN</span>
-      </div>`,
-  },
-  {
-    id: 'greenvic',
-    name: 'Greenvic',
-    sector: 'Productor & exportador',
-    description:
-      'Implementamos gestión de labores y supervisión experta de podas, raleos y estimaciones de cosecha, respaldadas con datos objetivos para cada intervención en sus huertos.',
-    services: ['Gestión de Labores', 'Estimación de Cosecha', 'Control de Calidad'],
-    logoHTML: `
-      <div class="brand-greenvic">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <circle cx="16" cy="10" r="6" fill="#E53E3E"/>
-          <circle cx="10" cy="16" r="5" fill="#E53E3E"/>
-          <circle cx="22" cy="16" r="5" fill="#E53E3E"/>
-          <path d="M16 16v14" stroke="#2D8B3F" stroke-width="3"/>
-          <path d="M10 22c4 2 8 2 12 0" stroke="#2D8B3F" stroke-width="2" fill="none"/>
-        </svg>
-        <span class="brand-greenvic-text">greenvic</span>
-      </div>`,
-  },
-  {
     id: 'exser',
-    name: 'EXSER',
-    sector: 'Exportadora de uva & cítricos',
+    name: 'Exser',
+    subtitle: 'Exportadora de frutas',
+    focus: 'Optimización de procesos de exportación y control de calidad',
     description:
-      'Brindamos zonal de proceso y control de calidad en plantas de empaque, protegiendo al productor y maximizando rendimientos ante las exigencias de mercados internacionales.',
-    services: ['Zonal de Proceso', 'Control de Calidad', 'Gestión de Packing'],
-    logoHTML: `
-      <div class="brand-exser">
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-          <circle cx="18" cy="14" r="8" fill="#E53E3E"/>
-          <circle cx="12" cy="20" r="6" fill="#C53030"/>
-          <circle cx="24" cy="20" r="6" fill="#C53030"/>
-          <path d="M18 22v10" stroke="#3A8F4E" stroke-width="2.5"/>
-        </svg>
-        <span class="brand-exser-text">EXSER</span>
-      </div>`,
+      'Con Exser implementamos soluciones digitales enfocadas en el control de calidad desde el huerto hasta la planta de empaque (packing), además de la digitalización de datos críticos para el comercio exterior. Esto les permite centralizar la información de sus productores y tener una trazabilidad en tiempo real de la fruta destinada a exportación, reduciendo errores administrativos y optimizando los tiempos de despacho.',
+    services: ['Control de Calidad', 'Trazabilidad', 'Comercio Exterior'],
+    logo: 'assets/logos/exser.svg',
+    logoAlt: 'Exser',
   },
   {
     id: 'unifrutti',
     name: 'Unifrutti',
-    sector: 'Trading global de fruta',
+    subtitle: 'Productora y exportadora de fruta fresca',
+    focus: 'Gestión masiva de operaciones agrícolas y supervisión de procesos',
     description:
-      'Coordinamos equipos de cosecha y trazabilidad digital en operaciones de alta demanda, asegurando ritmo, normativas y bienestar del equipo durante toda la campaña.',
-    services: ['Coordinación de Cosecha', 'Trazabilidad', 'Digitalización de Data'],
-    logoHTML: `
-      <div class="brand-unifrutti">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <circle cx="16" cy="18" r="12" fill="#E53E3E"/>
-          <path d="M16 6c0-2 2-4 4-2" stroke="#2D8B3F" stroke-width="2" fill="none"/>
-          <ellipse cx="16" cy="18" rx="8" ry="10" fill="#C53030" opacity="0.5"/>
-        </svg>
-        <span class="brand-unifrutti-text">unifrutti<br>traders</span>
-      </div>`,
+      'Para Unifrutti hemos desarrollado módulos a medida para la supervisión e inspección dentro de plantas mediante nuestro rol de Zonal de Proceso, protegiendo el rendimiento del productor ante la exportadora. Asimismo, automatizamos la captura de datos en terreno relativos a la estimación y coordinación de cosecha a gran escala, transformando planillas complejas en respuestas automáticas en minutos a través de UpCrop IA.',
+    services: ['Zonal de Proceso', 'Coordinación de Cosecha', 'UpCrop IA'],
+    logo: 'assets/logos/unifrutti.png',
+    logoAlt: 'Unifrutti',
+  },
+  {
+    id: 'giddings',
+    name: 'Giddings',
+    subtitle: 'Producción y exportación de berries y cerezas',
+    focus: 'Supervisión y control de calidad riguroso en cultivos de alta exigencia',
+    description:
+      'Trabajamos junto a Giddings en la digitalización de sus controles de calidad en terreno y en la supervisión de labores delicadas como cosechas y raleos. Mediante nuestra plataforma centralizada, el equipo de Giddings puede monitorizar el rendimiento de las cuadrillas y asegurar que la fruta cumpla con los exigentes estándares internacionales antes de ingresar al packing.',
+    services: ['Control de Calidad', 'Gestión de Labores', 'Supervisión de Cosecha'],
+    logo: 'assets/logos/giddings.png',
+    logoAlt: 'Giddings',
+    logoDark: true,
+  },
+  {
+    id: 'pi-berries',
+    name: 'Pi Berries',
+    subtitle: 'Especialistas en producción de frutos rojos',
+    focus: 'Trazabilidad integral de punta a punta y mercados de destino',
+    description:
+      'Para Pi Berries desarrollamos e implementamos una solución integral que digitaliza toda la cadena de trazabilidad, abarcando desde las operaciones en el huerto hasta el proceso de exportación, inclusive llegando al monitoreo en los mercados de destino. Toda la operación crítica corre sobre nuestra plataforma, permitiendo un control logístico y de calidad impecable en tiempo real.',
+    services: ['Trazabilidad', 'Control Logístico', 'Exportación'],
+    logo: 'assets/logos/pi-berries.png',
+    logoAlt: 'Pi Berries',
+  },
+  {
+    id: 'korta',
+    name: 'Korta Wines',
+    subtitle: 'Producción frutícola de carozo',
+    focus: 'Gestión operativa y de packing en cerezas y ciruelas',
+    description:
+      'Con Korta Wines trabajamos en su división frutícola, estructurando y programando módulos específicos para el control operativo, gestión de labores y packing en sus cultivos de cerezas y ciruelas. La centralización de estos datos clave les permite reaccionar con agilidad durante la temporada alta y optimizar los flujos de trabajo en base a datos objetivos.',
+    services: ['Gestión de Labores', 'Gestión de Packing', 'Control Operativo'],
+    logo: 'assets/logos/korta-wines.png',
+    logoAlt: 'Korta Wines',
+    logoDark: true,
+  },
+  {
+    id: 'greenvic',
+    name: 'Greenvic',
+    subtitle: 'Producción y exportación de fruta orgánica y convencional',
+    focus: 'Integración vertical desde el campo hasta el proceso de fruta',
+    description:
+      'En Greenvic nos enfocamos en conectar digitalmente los procesos de campo con la planta de proceso de fruta. Habilitamos herramientas a medida para que el flujo de información entre la cosecha y la recepción en packing sea continuo, asegurando que los estándares de fruta orgánica y convencional se mantengan controlados y auditables en cada etapa.',
+    services: ['Integración Campo-Packing', 'Fruta Orgánica', 'Trazabilidad'],
+    logo: 'assets/logos/greenvic.png',
+    logoAlt: 'Greenvic',
+    logoDark: true,
+  },
+  {
+    id: 'errazuriz',
+    name: 'Viña Errázuriz',
+    subtitle: 'Empresa vitivinícola',
+    focus: 'Control de labores en tiempo real y gestión rigurosa de costos',
+    description:
+      'Para Viña Errázuriz desarrollamos un sistema avanzado de control de labores en tiempo real con un foco estricto en costos y gastos. Esta funcionalidad permite mapear el rendimiento de los equipos en el campo y asociarlo directamente a los presupuestos operativos, entregando a la gerencia un control financiero milimétrico sobre las tareas diarias.',
+    services: ['Control de Labores', 'Costos y Gastos', 'Tiempo Real'],
+    logo: 'assets/logos/errazuriz.png',
+    logoAlt: 'Viña Errázuriz',
+  },
+  {
+    id: 'zeta',
+    name: 'Exportadora Zeta',
+    subtitle: 'Exportadora frutícola',
+    focus: 'ERP Agrícola integral (Financiero, Técnico, Operativo y Comercial)',
+    description:
+      'Con Exportadora Zeta programamos un ERP agrícola robusto y completamente a medida que centraliza cuatro pilares críticos: el área financiera, el control técnico operativo en terreno y la gestión comercial de exportación. Es un ecosistema completo donde la administración y el campo operan bajo una misma plataforma, eliminando por completo los silos de información.',
+    services: ['ERP Agrícola', 'Gestión Financiera', 'Comercio Exterior'],
+    logo: 'assets/logos/exportadora-zeta.png',
+    logoAlt: 'Exportadora Zeta',
+  },
+  {
+    id: 'agrofarming',
+    name: 'Agrofarming',
+    subtitle: 'Operaciones agrícolas',
+    focus: 'Inteligencia predictiva en estimación de cosecha y fenología en tiempo real',
+    description:
+      'Implementamos en Agrofarming un sistema de monitoreo en tiempo real especializado en la estimación de cosecha y el seguimiento de estados fenológicos. Al digitalizar estas variables críticas del ciclo del cultivo, la plataforma modela proyecciones precisas que ayudan al equipo a planificar la logística de materiales y personal con semanas de anticipación.',
+    services: ['Estimación de Cosecha', 'Estados Fenológicos', 'Analítica Predictiva'],
+    logo: 'assets/logos/agrofarming.png',
+    logoAlt: 'Agrofarming',
+  },
+  {
+    id: 'triadge',
+    name: 'Triadge',
+    subtitle: 'EE.UU.',
+    focus: 'Transformación digital punta a punta e integración con el Retail internacional',
+    description:
+      'Para Triadge en Estados Unidos realizamos una digitalización absoluta de la compañía: programamos desde los módulos operativos del campo y las plantas de proceso, hasta la integración con las cadenas de supermercados que distribuyen sus productos a lo largo de todo EE.UU. Es un ejemplo de cómo UpCrop puede unificar la producción agrícola con los requerimientos del retail norteamericano.',
+    services: ['Transformación Digital', 'Integración Retail', 'Operaciones USA'],
+    logo: 'assets/logos/triadge.png',
+    logoAlt: 'Triadge',
+  },
+  {
+    id: 'bostock',
+    name: 'Bostock New Zealand',
+    subtitle: 'Producción orgánica en Nueva Zelanda',
+    focus: 'Plataforma inteligente de evaluación y analítica de mercados internacionales',
+    description:
+      'Desarrollamos para Bostock New Zealand una plataforma integral de evaluación de mercados diseñada específicamente para la comercialización de manzana orgánica a nivel global. El sistema centraliza datos comerciales internacionales y tendencias de consumo, permitiendo que las decisiones de distribución y exportación estén respaldadas por analítica predictiva avanzada.',
+    services: ['Evaluación de Mercados', 'Analítica Predictiva', 'Comercialización Global'],
+    logo: 'assets/logos/bostock.png',
+    logoAlt: 'Bostock New Zealand',
+    logoDark: true,
   },
 ];
 
-const ITEM_HEIGHT = 100;
+const ITEM_HEIGHT = 110;
 const VISIBLE_CENTER_RATIO = 0.5;
-const SCROLL_DURATION = 35;
+const SCROLL_DURATION = 55;
 
 let activeIndex = 0;
 let isTransitioning = false;
@@ -93,10 +139,16 @@ const logoViewport = document.getElementById('logoViewport');
 const contentInner = document.getElementById('contentInner');
 const contentBadge = document.getElementById('contentBadge');
 const contentTitle = document.getElementById('contentTitle');
+const contentSubtitle = document.getElementById('contentSubtitle');
 const contentDesc = document.getElementById('contentDesc');
 const serviceTags = document.getElementById('serviceTags');
 const currentIndexEl = document.getElementById('currentIndex');
 const totalCountEl = document.getElementById('totalCount');
+
+function logoHTML(client) {
+  const darkClass = client.logoDark ? ' client-logo--dark' : '';
+  return `<img src="${client.logo}" alt="${client.logoAlt}" class="client-logo${darkClass}" loading="lazy" />`;
+}
 
 function buildLogoTrack() {
   const allClients = [...CLIENTS, ...CLIENTS];
@@ -104,12 +156,15 @@ function buildLogoTrack() {
     .map(
       (client, i) => `
     <div class="logo-item" data-index="${i % CLIENTS.length}" data-orig="${i}">
-      ${client.logoHTML}
+      <div class="logo-item__inner${client.logoDark ? ' logo-item__inner--dark' : ''}">
+        ${logoHTML(client)}
+      </div>
     </div>`
     )
     .join('');
 
   logoTrack.style.setProperty('--scroll-duration', `${SCROLL_DURATION}s`);
+  logoTrack.style.setProperty('--item-height', `${ITEM_HEIGHT}px`);
   logoTrack.classList.add('animate');
 
   totalCountEl.textContent = String(CLIENTS.length).padStart(2, '0');
@@ -121,12 +176,11 @@ function updateContent(index, animate = true) {
   const client = CLIENTS[index];
 
   const applyContent = () => {
-    contentBadge.textContent = client.sector;
+    contentBadge.textContent = client.focus;
     contentTitle.textContent = client.name;
+    contentSubtitle.textContent = client.subtitle;
     contentDesc.textContent = client.description;
-    serviceTags.innerHTML = client.services
-      .map((s) => `<li>${s}</li>`)
-      .join('');
+    serviceTags.innerHTML = client.services.map((s) => `<li>${s}</li>`).join('');
     currentIndexEl.textContent = String(index + 1).padStart(2, '0');
     contentInner.classList.remove('content-fade');
     isTransitioning = false;
