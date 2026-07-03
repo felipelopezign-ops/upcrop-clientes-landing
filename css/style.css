@@ -531,6 +531,14 @@ body {
   font-size: 0.85rem;
 }
 
+.logo-swipe-hint {
+  display: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #6b7280);
+  letter-spacing: 0.02em;
+}
+
 .logo-column.is-mobile .logo-viewport,
 .logo-column.is-mobile .logo-track,
 .logo-column.is-mobile .logo-item,
@@ -558,7 +566,16 @@ body {
   z-index: 20;
   pointer-events: auto;
   background: transparent;
-  touch-action: none;
+  touch-action: pan-y pinch-zoom;
+  cursor: grab;
+}
+
+.logo-column.is-mobile.is-swipe-dragging .logo-touch-shield {
+  cursor: grabbing;
+}
+
+.logo-column.is-mobile.is-swipe-dragging .logo-track {
+  animation-play-state: paused !important;
 }
 
 .logo-column.is-mobile .logo-track.animate:hover {
@@ -683,12 +700,18 @@ body {
 
   .logo-mobile-controls {
     display: flex !important;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.35rem;
     width: 100%;
     position: relative;
     z-index: 20;
     pointer-events: auto;
+  }
+
+  .logo-column.is-mobile .logo-swipe-hint {
+    display: block;
   }
 
   .logo-column.is-mobile .logo-mobile-controls,

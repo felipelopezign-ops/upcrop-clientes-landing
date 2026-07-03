@@ -128,12 +128,16 @@ const VISIBLE_CENTER_RATIO = 0.5;
 const SCROLL_DURATION = 55;
 const MOBILE_SCROLL_DURATION = 45;
 const MOBILE_BP = '(max-width: 900px)';
+const SWIPE_THRESHOLD = 44;
 
 let activeIndex = 0;
 let isTransitioning = false;
 let rafId = null;
 let isMobile = false;
 let userPaused = false;
+let isSwipeDragging = false;
+let swipeStartX = 0;
+let swipeStartTranslateX = 0;
 
 const logoColumn = document.getElementById('logoColumn');
 const logoTrack = document.getElementById('logoTrack');
@@ -217,10 +221,7 @@ function setActiveLogoClass(index) {
   });
 }
 
-function highlightActiveLogo() {
-  if (isMobileView() && userPaused) return;
-
-  const mobile = isMobileView();
+function findClosestLogoItem(mobile) {
   const items = logoTrack.querySelectorAll('.logo-item');
   const viewportRect = logoViewport.getBoundingClientRect();
 
@@ -242,16 +243,39 @@ function highlightActiveLogo() {
       closestDist = dist;
       closestItem = item;
     }
-
-    item.classList.remove('active');
   });
 
-  if (closestItem) {
-    closestItem.classList.add('active');
-    const index = parseInt(closestItem.dataset.index, 10);
-    if (!isTransitioning && index !== activeIndex) {
-      updateContent(index);
-    }
+  return closestItem;
+}
+
+function syncMobileActiveFromTrack(animateContent = false) {
+  const closestItem = findClosestLogoItem(true);
+  if (!closestItem) return;
+
+  const index = parseInt(closestItem.dataset.index, 10);
+  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
+    item.classList.toggle('active', parseInt(item.dataset.index, 10) === index);
+  });
+
+  if (!isTransitioning && index !== activeIndex) {
+    updateContent(index, animateContent);
+  }
+}
+
+function highlightActiveLogo() {
+  if (isMobileView() && userPaused && !isSwipeDragging) return;
+
+  const mobile = isMobileView();
+  const closestItem = findClosestLogoItem(mobile);
+  if (!closestItem) return;
+
+  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
+    item.classList.toggle('active', item === closestItem);
+  });
+
+  const index = parseInt(closestItem.dataset.index, 10);
+  if (!isTransitioning && index !== activeIndex) {
+    updateContent(index);
   }
 }
 
@@ -402,11 +426,54 @@ function applyViewportMode() {
   }
 }
 
-function blockTouch(e) {
-  if (!isMobileView()) return;
-  if (e.target.closest('.logo-ctrl')) return;
+function onSwipeStart(e) {
+  if (!isMobileView() || e.touches.length !== 1) return;
+
+  isSwipeDragging = true;
+  logoColumn.classList.add('is-swipe-dragging');
+
+  if (!userPaused) setPaused(true);
+  else freezeMobileTrack();
+
+  swipeStartX = e.touches[0].clientX;
+  swipeStartTranslateX = getTrackTranslate().x;
+  logoTrack.style.transition = 'none';
+}
+
+function onSwipeMove(e) {
+  if (!isMobileView() || !isSwipeDragging) return;
+
   e.preventDefault();
-  e.stopPropagation();
+  const deltaX = e.touches[0].clientX - swipeStartX;
+  logoTrack.style.transform = `translateX(${swipeStartTranslateX + deltaX}px)`;
+  syncMobileActiveFromTrack(false);
+}
+
+function onSwipeEnd(e) {
+  if (!isMobileView() || !isSwipeDragging) return;
+
+  isSwipeDragging = false;
+  logoColumn.classList.remove('is-swipe-dragging');
+
+  const deltaX = e.changedTouches[0].clientX - swipeStartX;
+  let targetIndex = activeIndex;
+
+  if (deltaX <= -SWIPE_THRESHOLD) {
+    targetIndex = (activeIndex + 1) % CLIENTS.length;
+  } else if (deltaX >= SWIPE_THRESHOLD) {
+    targetIndex = (activeIndex - 1 + CLIENTS.length) % CLIENTS.length;
+  }
+
+  mobileGoTo(targetIndex, targetIndex !== activeIndex);
+}
+
+function initMobileSwipe() {
+  if (!logoTouchShield) return;
+
+  logoTouchShield.addEventListener('touchstart', onSwipeStart, { passive: true });
+  logoTouchShield.addEventListener('touchmove', onSwipeMove, { passive: false });
+  logoTouchShield.addEventListener('touchend', onSwipeEnd, { passive: true });
+  logoTouchShield.addEventListener('touchcancel', onSwipeEnd, { passive: true });
 }
 
 function initClickHandlers() {
@@ -430,13 +497,7 @@ function initClickHandlers() {
     setPaused(!userPaused);
   });
 
-  const touchBlockers = [logoViewport, logoTrack, logoTouchShield, logoColumn];
-  touchBlockers.forEach((el) => {
-    if (!el) return;
-    ['touchstart', 'touchmove', 'touchend'].forEach((evt) => {
-      el.addEventListener(evt, blockTouch, { passive: false, capture: true });
-    });
-  });
+  initMobileSwipe();
 }
 
 function init() {
