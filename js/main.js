@@ -125,13 +125,22 @@ const CLIENTS = [
 const ITEM_HEIGHT = 210;
 const VISIBLE_CENTER_RATIO = 0.5;
 const SCROLL_DURATION = 55;
+const MOBILE_BP = '(max-width: 900px)';
+const MOBILE_AUTO_MS = 4500;
 
 let activeIndex = 0;
 let isTransitioning = false;
 let rafId = null;
+let isMobile = false;
+let userPaused = false;
+let mobileAutoTimer = null;
 
+const logoColumn = document.getElementById('logoColumn');
 const logoTrack = document.getElementById('logoTrack');
 const logoViewport = document.getElementById('logoViewport');
+const logoPrev = document.getElementById('logoPrev');
+const logoNext = document.getElementById('logoNext');
+const logoPause = document.getElementById('logoPause');
 const contentInner = document.getElementById('contentInner');
 const contentBadge = document.getElementById('contentBadge');
 const contentTitle = document.getElementById('contentTitle');
@@ -141,21 +150,21 @@ const serviceTags = document.getElementById('serviceTags');
 const currentIndexEl = document.getElementById('currentIndex');
 const totalCountEl = document.getElementById('totalCount');
 
+const mobileQuery = window.matchMedia(MOBILE_BP);
+
 function buildLogoTrack() {
   const allClients = [...CLIENTS, ...CLIENTS];
   logoTrack.innerHTML = allClients
     .map(
       (client, i) => `
     <div class="logo-item" data-index="${i % CLIENTS.length}" data-orig="${i}">
-      <img src="${client.logo}" alt="${client.logoAlt}" class="client-logo" loading="lazy" />
+      <img src="${client.logo}" alt="${client.logoAlt}" class="client-logo" loading="lazy" draggable="false" />
     </div>`
     )
     .join('');
 
   logoTrack.style.setProperty('--scroll-duration', `${SCROLL_DURATION}s`);
   logoTrack.style.setProperty('--item-height', `${ITEM_HEIGHT}px`);
-  logoTrack.classList.add('animate');
-
   totalCountEl.textContent = String(CLIENTS.length).padStart(2, '0');
 }
 
@@ -182,6 +191,14 @@ function updateContent(index, animate = true) {
   } else {
     applyContent();
   }
+}
+
+function syncActiveLogoClass(index) {
+  logoTrack.querySelectorAll('.logo-item').forEach((item) => {
+    const itemIndex = parseInt(item.dataset.index, 10);
+    const orig = parseInt(item.dataset.orig, 10);
+    item.classList.toggle('active', itemIndex === index && orig < CLIENTS.length);
+  });
 }
 
 function highlightActiveLogo() {
@@ -215,13 +232,88 @@ function highlightActiveLogo() {
 }
 
 function trackScroll() {
-  highlightActiveLogo();
+  if (!isMobile) highlightActiveLogo();
   rafId = requestAnimationFrame(trackScroll);
 }
 
+function getTrackTranslateY() {
+  const style = window.getComputedStyle(logoTrack);
+  const matrix = style.transform;
+  if (matrix === 'none') return 0;
+  const values = matrix.match(/matrix.*\((.+)\)/);
+  if (!values) return 0;
+  const parts = values[1].split(', ');
+  return parseFloat(parts[5] || parts[13] || 0);
+}
+
+function getMobileOffset(index) {
+  const viewportHeight = logoViewport.clientHeight;
+  return -(index * ITEM_HEIGHT) + viewportHeight / 2 - ITEM_HEIGHT / 2;
+}
+
+function setMobilePosition(index, animateContent = true) {
+  logoTrack.style.transition = 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)';
+  logoTrack.style.transform = `translateY(${getMobileOffset(index)}px)`;
+  syncActiveLogoClass(index);
+  updateContent(index, animateContent);
+}
+
+function stopMobileAuto() {
+  if (mobileAutoTimer) {
+    clearInterval(mobileAutoTimer);
+    mobileAutoTimer = null;
+  }
+}
+
+function startMobileAuto() {
+  stopMobileAuto();
+  if (userPaused || !isMobile) return;
+  mobileAutoTimer = setInterval(() => {
+    goToNext(true);
+  }, MOBILE_AUTO_MS);
+}
+
+function updatePauseButton() {
+  logoPause.classList.toggle('is-paused', userPaused);
+  logoPause.setAttribute('aria-label', userPaused ? 'Reanudar animación' : 'Pausar animación');
+  logoColumn.classList.toggle('user-paused', userPaused);
+}
+
+function setPaused(paused) {
+  userPaused = paused;
+  updatePauseButton();
+
+  if (isMobile) {
+    logoTrack.style.animationPlayState = 'paused';
+    if (userPaused) stopMobileAuto();
+    else startMobileAuto();
+  } else {
+    logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
+  }
+}
+
+function goToPrev() {
+  const prev = (activeIndex - 1 + CLIENTS.length) % CLIENTS.length;
+  if (isMobile) {
+    setPaused(true);
+    setMobilePosition(prev);
+  } else {
+    jumpToClient(prev);
+  }
+}
+
+function goToNext(fromAuto = false) {
+  const next = (activeIndex + 1) % CLIENTS.length;
+  if (isMobile) {
+    if (!fromAuto) setPaused(true);
+    setMobilePosition(next);
+  } else {
+    jumpToClient(next);
+  }
+}
+
 function jumpToClient(index) {
-  const trackStyle = getComputedStyle(logoTrack);
-  const isPaused = trackStyle.animationPlayState === 'paused';
+  const wasPaused = userPaused || getComputedStyle(logoTrack).animationPlayState === 'paused';
 
   logoTrack.style.animationPlayState = 'paused';
 
@@ -241,48 +333,91 @@ function jumpToClient(index) {
 
   logoTrack.style.animation = 'none';
   logoTrack.style.transform = `translateY(${targetY}px)`;
-
+  syncActiveLogoClass(index);
   updateContent(index);
 
   setTimeout(() => {
+    if (isMobile) return;
     logoTrack.style.animation = '';
     logoTrack.style.transform = '';
-    if (!isPaused) logoTrack.style.animationPlayState = 'running';
+    logoTrack.style.animationPlayState = wasPaused ? 'paused' : 'running';
   }, 50);
 }
 
-function getTrackTranslateY() {
-  const style = window.getComputedStyle(logoTrack);
-  const matrix = style.transform;
-  if (matrix === 'none') return 0;
-  const values = matrix.match(/matrix.*\((.+)\)/);
-  if (!values) return 0;
-  const parts = values[1].split(', ');
-  return parseFloat(parts[5] || parts[13] || 0);
+function enableDesktopMode() {
+  stopMobileAuto();
+  logoTrack.style.transition = '';
+  logoTrack.style.transform = '';
+  logoTrack.style.animation = '';
+  logoTrack.classList.add('animate');
+  logoTrack.style.animationPlayState = userPaused ? 'paused' : 'running';
+
+  if (!rafId) rafId = requestAnimationFrame(trackScroll);
+}
+
+function enableMobileMode() {
+  logoTrack.classList.remove('animate');
+  logoTrack.style.animation = 'none';
+  logoTrack.style.animationPlayState = 'paused';
+  setMobilePosition(activeIndex, false);
+
+  if (!userPaused) startMobileAuto();
+}
+
+function applyViewportMode() {
+  isMobile = mobileQuery.matches;
+  logoColumn.classList.toggle('is-mobile', isMobile);
+
+  if (isMobile) enableMobileMode();
+  else enableDesktopMode();
+}
+
+function blockTouchOnLogoZone(e) {
+  if (!isMobile) return;
+  e.preventDefault();
 }
 
 function initClickHandlers() {
   logoTrack.addEventListener('click', (e) => {
+    if (isMobile) return;
     const item = e.target.closest('.logo-item');
     if (!item) return;
     jumpToClient(parseInt(item.dataset.index, 10));
   });
+
+  logoPrev.addEventListener('click', goToPrev);
+  logoNext.addEventListener('click', () => goToNext(false));
+  logoPause.addEventListener('click', () => setPaused(!userPaused));
+
+  logoViewport.addEventListener('touchstart', blockTouchOnLogoZone, { passive: false });
+  logoViewport.addEventListener('touchmove', blockTouchOnLogoZone, { passive: false });
+  logoTrack.addEventListener('touchstart', blockTouchOnLogoZone, { passive: false });
+  logoTrack.addEventListener('touchmove', blockTouchOnLogoZone, { passive: false });
 }
 
 function init() {
   buildLogoTrack();
   updateContent(0, false);
+  syncActiveLogoClass(0);
   initClickHandlers();
+  applyViewportMode();
   rafId = requestAnimationFrame(trackScroll);
+
+  mobileQuery.addEventListener('change', applyViewportMode);
+  window.addEventListener('resize', () => {
+    if (isMobile) setMobilePosition(activeIndex, false);
+  });
 }
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     logoTrack.style.animationPlayState = 'paused';
+    stopMobileAuto();
     cancelAnimationFrame(rafId);
+    rafId = null;
   } else {
-    logoTrack.style.animationPlayState = 'running';
-    rafId = requestAnimationFrame(trackScroll);
+    applyViewportMode();
+    if (!rafId) rafId = requestAnimationFrame(trackScroll);
   }
 });
 

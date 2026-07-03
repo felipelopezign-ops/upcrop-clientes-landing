@@ -455,6 +455,69 @@ body {
   animation-play-state: paused;
 }
 
+/* ── Mobile carousel controls ── */
+.logo-mobile-controls {
+  display: none;
+}
+
+.logo-ctrl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: var(--blue);
+  color: var(--white);
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--blue-glow);
+  transition: transform 0.2s var(--ease), background 0.2s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.logo-ctrl svg {
+  width: 22px;
+  height: 22px;
+}
+
+.logo-ctrl:active {
+  transform: scale(0.94);
+}
+
+.logo-ctrl--pause .icon-play {
+  display: none;
+}
+
+.logo-ctrl--pause.is-paused .icon-pause {
+  display: none;
+}
+
+.logo-ctrl--pause.is-paused .icon-play {
+  display: block;
+}
+
+.logo-column.is-mobile .logo-viewport,
+.logo-column.is-mobile .logo-track,
+.logo-column.is-mobile .logo-item {
+  touch-action: none;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.logo-column.is-mobile .logo-item {
+  cursor: default;
+}
+
+.logo-column.is-mobile .logo-track.animate:hover {
+  animation-play-state: running;
+}
+
+.logo-column.is-mobile.user-paused .logo-track {
+  animation-play-state: paused !important;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .header { padding: 1rem 1.5rem; }
@@ -475,6 +538,23 @@ body {
   .client-logo { max-width: 260px; max-height: 110px; }
   .logo-item.active .client-logo { max-height: 145px; max-width: 290px; }
   .logo-item:not(.active) .client-logo { transform: scale(0.93); }
+
+  .logo-mobile-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+  }
+
+  .logo-column {
+    flex-direction: column;
+    height: auto;
+    min-height: 420px;
+  }
 
   .content-column { padding: 0; }
   .closing { padding: 1.5rem 1.5rem 3rem; }
